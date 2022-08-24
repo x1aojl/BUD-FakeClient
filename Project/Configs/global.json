@@ -1,0 +1,11 @@
+﻿{
+    "httpUrl" : "https://api-test.joinbudapp.com",
+    "mapInfo" : {
+        "mapId": "123",
+        "version" : "1.41.0",
+        "isPrivate": 0,
+        "roomCode": "",
+        "maxPlayerCount": 8,
+        "isPvp": "0"
+    }
+}
