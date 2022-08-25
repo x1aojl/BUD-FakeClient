@@ -29,6 +29,11 @@ public class ConsoleInput : Component, IFrameDrived
             return game.LetUserLeaveRoom(userId);
         });
 
+        OnCommand("leave_all", (ps) => {
+            var game = (Game)_core;
+            return game.LetAllUserLeaveRoom();
+        });
+
         OnCommand("export", (ps) => {
             var da = GetCom<DataAnalysis>();
             da.Export();

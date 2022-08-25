@@ -356,8 +356,8 @@ public partial class FakeClient
 
     private Dictionary<string, object> _sessions = new Dictionary<string, object>();
 
-    private string _ip { get { return _sessions["ipAddress"].ToString(); } }
-    private int _port { get { return int.Parse(_sessions["port"].ToString()); } }
-    private string _roomId { get { return _sessions["roomId"].ToString(); } }
-    private string _sessionId { get { return _sessions["sessionId"].ToString(); } }
+    private string _ip { get { return _sessions != null && _sessions["ipAddress"] != null ? _sessions["ipAddress"].ToString() : ""; } }
+    private int _port { get { return _sessions != null && _sessions["port"] != null ? int.Parse(_sessions["port"].ToString()) : 0; } }
+    private string _roomId { get { return _sessions != null && _sessions["roomId"] != null ? _sessions["roomId"].ToString() : ""; } }
+    private string _sessionId { get { return _sessions != null && _sessions["sessionId"] != null ? _sessions["sessionId"].ToString() : ""; } }
 }

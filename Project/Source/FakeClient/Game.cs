@@ -72,12 +72,23 @@ public class Game : Core
         if (_clients.TryGetValue(userId, out client))
         {
             client.Quit();
-            return string.Format("Waiting for user leave room: {0}", userId);
+            return string.Format("Waiting for user leave room: {0}.", userId);
         }
 
         return string.Format("User leave room failed. {0} does not exist.", userId);
     }
 
-    private QueuedThread _workingThread = new QueuedThread(32);
+    public string LetAllUserLeaveRoom()
+    {
+        foreach (var kvp in _clients)
+        {
+            var client = kvp.Value;
+            client.Quit();
+        }
+
+        return string.Format("Waiting for all user leave room.");
+    }
+
+    private QueuedThread _workingThread = new QueuedThread(24);
     private Dictionary<string, FakeClient> _clients = new Dictionary<string, FakeClient>();
 }
