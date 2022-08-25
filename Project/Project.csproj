@@ -66,6 +66,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Source\Common\Core\Component.cs" />
+    <Compile Include="Source\Common\Core\ComponentContainer.cs" />
+    <Compile Include="Source\Common\Core\Core.cs" />
+    <Compile Include="Source\Common\IFrameDrived.cs" />
+    <Compile Include="Source\FakeClient\ConsoleInput.cs" />
+    <Compile Include="Source\FakeClient\DataAnalysis.cs" />
+    <Compile Include="Source\FakeClient\Game.cs" />
     <Compile Include="Source\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Source\Configs\GlobalInfo.cs" />

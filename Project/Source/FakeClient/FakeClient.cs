@@ -51,6 +51,12 @@ public partial class FakeClient
         GetGameSession();
     }
 
+    public void Quit()
+    {
+        StopFrameSync();
+        LeaveRoom();
+    }
+
     private void GetGameSession()
     {
         Record("GetGameSessionReq");
@@ -78,13 +84,13 @@ public partial class FakeClient
         _socket1 = new Socket(ip, port);
         _socket2 = new Socket(ip, port + 2000);
 
-        _socket1.onConnect = HandleBusinessSocketConnect;
-        _socket2.onConnect = HandleFramesyncSocketConnect;
+        _socket1.onConnect = HandleRoomConnect;
+        _socket2.onConnect = HandleFrameConnect;
 
-        _socket1.onResponse = HandleBusinessSocketResponse;
-        _socket2.onResponse = HandleFramesyncSocketResponse;
-        _socket1.onBroadcast = HandleBusinessSocketBroadcast;
-        _socket2.onBroadcast = HandleFramesyncSocketBroadcast;
+        _socket1.onResponse = HandleRoomResponse;
+        _socket2.onResponse = HandleFrameResponse;
+        _socket1.onBroadcast = HandleRoomBroadcast;
+        _socket2.onBroadcast = HandleFrameBroadcast;
 
         _socket1.Connect();
     }
@@ -177,8 +183,28 @@ public partial class FakeClient
 
     private void HandleStartFrameSync()
     {
-        Record("StartFrameSyncRsp");
         _isCanSendFrame = true;
+
+        Record("StartFrameSyncRsp");
+    }
+
+    private void StopFrameSync()
+    {
+        _isCanSendFrame = false;
+
+        var req = new StopFrameSyncReq();
+        req.RoomId = _sessionDic["roomId"].ToString();
+        req.PlayerId = _userInfo.uid;
+
+        _socket2.SendRequest(ClientSendServerReqCmd.ECmdStopFrameSyncReq, _userInfo.uid, req, (ok) => {
+            if (ok)
+                Record("StopFrameSyncReq");
+        });
+    }
+
+    private void HandleStopFrameSync()
+    {
+        Record("StopFrameSyncRsp");
     }
 
     private void SendFrame()
@@ -198,6 +224,24 @@ public partial class FakeClient
     private void HandleBroadcastFrameSync()
     {
         Record("BroadcastFrameSync");
+    }
+
+    private void LeaveRoom()
+    {
+        var req = new LeaveRoomReq();
+        req.PlayerId = _userInfo.uid;
+        req.RoomId = _sessionDic["roomId"].ToString();
+
+        _socket1.SendRequest(ClientSendServerReqCmd.ECmdQuitRoomReq, _userInfo.uid, req, (ok) => {
+            if (ok)
+                Record("LeaveRoomReq");
+        });
+    }
+
+    private void HandleLeaveRoom()
+    {
+        Record("LeaveRoomRsp");
+        ConsoleLogger.Info(string.Format("Leave room. uid = {0}", _userInfo.uid));
     }
 
     private void RunOneFrame(int deltaTime)
@@ -246,17 +290,17 @@ public partial class FakeClient
 #endregion
 
     #region 服务器消息处理
-    private void HandleBusinessSocketConnect()
+    private void HandleRoomConnect()
     {
         EnterRoom();
     }
 
-    private void HandleFramesyncSocketConnect()
+    private void HandleFrameConnect()
     {
         StartFrameSync();
     }
 
-    private void HandleBusinessSocketResponse(ClientSendServerReqCmd cmd, DecodeRspResult result)
+    private void HandleRoomResponse(ClientSendServerReqCmd cmd, DecodeRspResult result)
     {
         switch (cmd)
         {
@@ -266,12 +310,16 @@ public partial class FakeClient
                 break;
             case ClientSendServerReqCmd.ECmdRoomChatReq:
                 HandleGetItems();
-                ConsoleLogger.Info(string.Format("Get items success. response = {0}\n", result.Body));
+                //ConsoleLogger.Info(string.Format("Get items success. response = {0}\n", result.Body));
+                break;
+            case ClientSendServerReqCmd.ECmdQuitRoomReq:
+                //ConsoleLogger.Warn(string.Format("Leave room success. response = {0}", result.Body));
+                HandleLeaveRoom();
                 break;
         }
     }
 
-    private void HandleFramesyncSocketResponse(ClientSendServerReqCmd cmd, DecodeRspResult result)
+    private void HandleFrameResponse(ClientSendServerReqCmd cmd, DecodeRspResult result)
     {
         switch (cmd)
         {
@@ -280,12 +328,13 @@ public partial class FakeClient
                 //ConsoleLogger.Warn(string.Format("Start frame sync success. response = {0}", result.Body));
                 break;
             case ClientSendServerReqCmd.ECmdStopFrameSyncReq:
+                HandleStopFrameSync();
                 //ConsoleLogger.Warn(string.Format("Stop frame sync success. response = {0}", result.Body));
                 break;
         }
     }
 
-    private void HandleBusinessSocketBroadcast(DecodeBstResult result)
+    private void HandleRoomBroadcast(DecodeBstResult result)
     {
         var type = result.BstPacket.Type;
         switch (type)
@@ -305,7 +354,7 @@ public partial class FakeClient
         }
     }
 
-    private void HandleFramesyncSocketBroadcast(DecodeBstResult result)
+    private void HandleFrameBroadcast(DecodeBstResult result)
     {
         var type = result.BstPacket.Type;
         switch (type)
@@ -326,10 +375,13 @@ public partial class FakeClient
 
     private void Record(string type, int val = 1)
     {
-        if (! _analysisDic.ContainsKey(type))
-            _analysisDic.Add(type, 0);
+        lock(_analysisDic)
+        {
+            if (!_analysisDic.ContainsKey(type))
+                _analysisDic.Add(type, 0);
 
-        _analysisDic[type] = _analysisDic[type] + val;
+            _analysisDic[type] = _analysisDic[type] + val;
+        }
     }
     #endregion
 }

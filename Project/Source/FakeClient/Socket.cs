@@ -79,25 +79,31 @@ public class Socket
 
         var data = Unpack(rawData);
 
-        // Response
-        if (data.Pre == (byte)MessageDataTag.ClientPre && data.End == (byte)MessageDataTag.ClientEnd)
+        try
         {
-            var rsp = Pb.DecodeRsp(data.Body, (_seq) => {
-                return GetRequestCmd(_seq);
-            });
+            // Response
+            if (data.Pre == (byte)MessageDataTag.ClientPre && data.End == (byte)MessageDataTag.ClientEnd)
+            {
+                var rsp = Pb.DecodeRsp(data.Body, (_seq) => {
+                    return GetRequestCmd(_seq);
+                });
 
-            var seq = rsp.RspPacket.Seq;
-            var cmd = (ClientSendServerReqCmd)GetRequestCmd(seq);
+                var seq = rsp.RspPacket.Seq;
+                var cmd = (ClientSendServerReqCmd)GetRequestCmd(seq);
 
-            _sendDic.Remove(seq);
+                _sendDic.Remove(seq);
 
-            onResponse?.Invoke(cmd, rsp);
+                onResponse?.Invoke(cmd, rsp);
+            }
+            // Broadcast
+            else if (data.Pre == (byte)MessageDataTag.ServerPre && data.End == (byte)MessageDataTag.ServerEnd)
+            {
+                var bst = Pb.DecodeBst(data.Body);
+                onBroadcast?.Invoke(bst);
+            }
         }
-        // Broadcast
-        else if (data.Pre == (byte)MessageDataTag.ServerPre && data.End == (byte)MessageDataTag.ServerEnd)
+        catch (Exception ex)
         {
-            var bst = Pb.DecodeBst(data.Body);
-            onBroadcast?.Invoke(bst);
         }
     }
 
