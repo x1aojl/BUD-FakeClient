@@ -72,6 +72,7 @@
     <Compile Include="Source\Common\IFrameDrived.cs" />
     <Compile Include="Source\FakeClient\ConsoleInput.cs" />
     <Compile Include="Source\FakeClient\DataAnalysis.cs" />
+    <Compile Include="Source\FakeClient\EventSystem.cs" />
     <Compile Include="Source\FakeClient\Game.cs" />
     <Compile Include="Source\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

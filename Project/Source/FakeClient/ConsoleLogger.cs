@@ -19,7 +19,7 @@ public class ConsoleLogger
 
     private static void WriteInColor(string data, ConsoleColor color)
     {
-        Console.ForegroundColor = color;
+        //Console.ForegroundColor = color;
         Console.WriteLine(data);
     }
 }

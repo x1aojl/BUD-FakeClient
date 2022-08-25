@@ -11,25 +11,6 @@ public enum RecChatType
 
 public partial class FakeClient
 {
-    private string _httpUrl;
-    private MapInfo _mapInfo;
-    private UserInfo _userInfo;
-    
-    private Socket _socket1;
-    private Socket _socket2;
-
-    private DateTime _startTime;
-
-    private bool _isCanSendFrame = false;
-    private int _lastFrameTime;
-    private const int FRAME_STEP = 60;
-
-    private int _tryTime = 0;
-    private const int MAX_TRY_TIME = 3;
-
-    private Dictionary<string, object> _sessionDic = new Dictionary<string, object>();
-    private Dictionary<string, int> _analysisDic = new Dictionary<string, int>();
-
     public void Init(string httpUrl, MapInfo mapInfo, UserInfo userInfo)
     {
         FrameDriver.Instance.RunOneFrame += RunOneFrame;
@@ -39,7 +20,6 @@ public partial class FakeClient
         this._userInfo = userInfo;
     }
 
-    #region 进房流程
     public void Go()
     {
         if (_tryTime == 0)
@@ -57,32 +37,28 @@ public partial class FakeClient
         LeaveRoom();
     }
 
+    #region 进房流程
     private void GetGameSession()
     {
-        Record("GetGameSessionReq");
-
         var url = string.Format("{0}/{1}", _httpUrl, "engine-match/getGameSession");
         var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(_mapInfo));
         var headers = JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(_userInfo));
 
+        EventSystem.Instance.Send(EventID.GET_GAME_SESSION_REQ, _userInfo.uid);
         Http.MakeHttpRequest(url, parameters, headers, (content) => {
+            EventSystem.Instance.Send(EventID.GET_GAME_SESSION_RSP, _userInfo.uid);
             HandleGetGameSession(JsonConvert.DeserializeObject<Dictionary<string, object>>(content));
         }, (content) => {
             Go();
         });
     }
 
-    private void HandleGetGameSession(Dictionary<string, object> data)
+    private void HandleGetGameSession(Dictionary<string, object> sessions)
     {
-        Record("GetGameSessionRsp");
+        _sessions = sessions;
 
-        _sessionDic = data;
-
-        var ip = data["ipAddress"].ToString();
-        var port = int.Parse(data["port"].ToString());
-
-        _socket1 = new Socket(ip, port);
-        _socket2 = new Socket(ip, port + 2000);
+        _socket1 = new Socket(_ip, _port);
+        _socket2 = new Socket(_ip, _port + 2000);
 
         _socket1.onConnect = HandleRoomConnect;
         _socket2.onConnect = HandleFrameConnect;
@@ -113,13 +89,13 @@ public partial class FakeClient
         req.IsPrivate = _mapInfo.isPrivate == 1;
         req.CustomProperties = "";
         req.PlayerInfo = playerInfo;
-        req.SessionId = _sessionDic["sessionId"].ToString();
-        req.RoomId = _sessionDic["roomId"].ToString();
+        req.SessionId = _sessionId;
+        req.RoomId = _roomId;
         req.GameData = "{\"IsPvp\":\"0\",\"ReadyTime\":9,\"GameDuration\":0,\"WinType\":0,\"OpenBlood\":false,\"HasLeaderBoard\":false,\"InitBlood\":100.0,\"IsOpenBaggage\":false,\"Team\":\"\",\"damageType\":[0],\"Seq\":\"\"}";
 
         _socket1.SendRequest(ClientSendServerReqCmd.ECmdEnterRoomReq, _userInfo.uid, req, (ok) => {
             if (ok)
-                Record("EnterRoomReq");
+                EventSystem.Instance.Send(EventID.ENTER_ROOM_REQ, _userInfo.uid);
             else
                 Go();
         });
@@ -127,8 +103,6 @@ public partial class FakeClient
 
     private void HandleEnterRoom()
     {
-        Record("EnterRoomRsp");
-
         _socket2.Connect();
 
         GetItems();
@@ -149,33 +123,32 @@ public partial class FakeClient
 
         var req = new SendToClientReq();
         req.PlayerId = _userInfo.uid;
-        req.RoomId = _sessionDic["roomId"].ToString();
+        req.RoomId = _roomId;
         req.Msg = JsonConvert.SerializeObject(roomChatData);
         req.RecvPlayerList.AddRange(recvPlayerList);
 
         _socket1.SendRequest(ClientSendServerReqCmd.ECmdRoomChatReq, _userInfo.uid, req, (ok) => {
             if (ok)
-                Record("GetItemsReq");
+                EventSystem.Instance.Send(EventID.GET_ITEMS_REQ, _userInfo.uid);
             else
                 Go();
         });
     }
 
-    private void HandleGetItems()
+    private void HandleGetItems(string data)
     {
-        Record("GetItemsRsp");
-        Record("EnterRoomCostTime", (int)DateTime.Now.Subtract(_startTime).TotalSeconds);
+        //ConsoleLogger.Info(string.Format("Get items success. data = {0}", data));
     }
 
     private void StartFrameSync()
     {
         var req = new StartFrameSyncReq();
-        req.RoomId = _sessionDic["roomId"].ToString();
+        req.RoomId = _roomId;
         req.PlayerId = _userInfo.uid;
 
         _socket2.SendRequest(ClientSendServerReqCmd.ECmdStartFrameSyncReq, _userInfo.uid, req, (ok) => {
             if (ok)
-                Record("StartFrameSyncReq");
+                EventSystem.Instance.Send(EventID.START_FRAME_SYNC_REQ, _userInfo.uid);
             else
                 Go();
         });
@@ -184,8 +157,6 @@ public partial class FakeClient
     private void HandleStartFrameSync()
     {
         _isCanSendFrame = true;
-
-        Record("StartFrameSyncRsp");
     }
 
     private void StopFrameSync()
@@ -193,29 +164,29 @@ public partial class FakeClient
         _isCanSendFrame = false;
 
         var req = new StopFrameSyncReq();
-        req.RoomId = _sessionDic["roomId"].ToString();
+        req.RoomId = _roomId;
         req.PlayerId = _userInfo.uid;
 
         _socket2.SendRequest(ClientSendServerReqCmd.ECmdStopFrameSyncReq, _userInfo.uid, req, (ok) => {
             if (ok)
-                Record("StopFrameSyncReq");
+                EventSystem.Instance.Send(EventID.STOP_FRAME_SYNC_REQ, _userInfo.uid);
         });
     }
 
     private void HandleStopFrameSync()
     {
-        Record("StopFrameSyncRsp");
+        ConsoleLogger.Info(string.Format("User({0}) stop frame sync success.", _userInfo.uid));
     }
 
     private void SendFrame()
     {
         var req = new SendFrameReq();
-        req.RoomId = _sessionDic["roomId"].ToString();
+        req.RoomId = _roomId;
         req.Item = GetFrameItem();
 
         _socket2.SendRequest(ClientSendServerReqCmd.ECmdRelaySendFrameReq, _userInfo.uid, req, (ok) => {
             if (ok)
-                Record("SendFrameSyncReq");
+                EventSystem.Instance.Send(EventID.SEND_FRAME_SYNC_REQ, _userInfo.uid);
             else
                 Go();
         });
@@ -223,25 +194,24 @@ public partial class FakeClient
 
     private void HandleBroadcastFrameSync()
     {
-        Record("BroadcastFrameSync");
+        //ConsoleLogger.Info(string.Format("User({0}) receive frame data.", _userInfo.uid));
     }
 
     private void LeaveRoom()
     {
         var req = new LeaveRoomReq();
         req.PlayerId = _userInfo.uid;
-        req.RoomId = _sessionDic["roomId"].ToString();
+        req.RoomId = _roomId;
 
         _socket1.SendRequest(ClientSendServerReqCmd.ECmdQuitRoomReq, _userInfo.uid, req, (ok) => {
             if (ok)
-                Record("LeaveRoomReq");
+                EventSystem.Instance.Send(EventID.LEAVE_ROOM_REQ, _userInfo.uid);
         });
     }
 
     private void HandleLeaveRoom()
     {
-        Record("LeaveRoomRsp");
-        ConsoleLogger.Info(string.Format("Leave room. uid = {0}", _userInfo.uid));
+        ConsoleLogger.Info(string.Format("User({0}) has left the room", _userInfo.uid));
     }
 
     private void RunOneFrame(int deltaTime)
@@ -287,7 +257,7 @@ public partial class FakeClient
 
         return item;
     }
-#endregion
+    #endregion
 
     #region 服务器消息处理
     private void HandleRoomConnect()
@@ -305,15 +275,16 @@ public partial class FakeClient
         switch (cmd)
         {
             case ClientSendServerReqCmd.ECmdEnterRoomReq:
-                //ConsoleLogger.Warn(string.Format("Enter room success. response = {0}", result.Body));
+                EventSystem.Instance.Send(EventID.ENTER_ROOM_RSP, _userInfo.uid);
                 HandleEnterRoom();
                 break;
             case ClientSendServerReqCmd.ECmdRoomChatReq:
-                HandleGetItems();
-                //ConsoleLogger.Info(string.Format("Get items success. response = {0}\n", result.Body));
+                EventSystem.Instance.Send(EventID.GET_ITEMS_RSP, _userInfo.uid);
+                EventSystem.Instance.Send(EventID.ENTER_ROOM_COST_TIME, _userInfo.uid);
+                HandleGetItems(result.Body.ToString());
                 break;
             case ClientSendServerReqCmd.ECmdQuitRoomReq:
-                //ConsoleLogger.Warn(string.Format("Leave room success. response = {0}", result.Body));
+                EventSystem.Instance.Send(EventID.LEAVE_ROOM_RSP, _userInfo.uid);
                 HandleLeaveRoom();
                 break;
         }
@@ -324,12 +295,12 @@ public partial class FakeClient
         switch (cmd)
         {
             case ClientSendServerReqCmd.ECmdStartFrameSyncReq:
+                EventSystem.Instance.Send(EventID.START_FRAME_SYNC_RSP, _userInfo.uid);
                 HandleStartFrameSync();
-                //ConsoleLogger.Warn(string.Format("Start frame sync success. response = {0}", result.Body));
                 break;
             case ClientSendServerReqCmd.ECmdStopFrameSyncReq:
+                EventSystem.Instance.Send(EventID.STOP_FRAME_SYNC_RSP, _userInfo.uid);
                 HandleStopFrameSync();
-                //ConsoleLogger.Warn(string.Format("Stop frame sync success. response = {0}", result.Body));
                 break;
         }
     }
@@ -360,28 +331,33 @@ public partial class FakeClient
         switch (type)
         {
             case ServerSendClientBstType.EPushTypeRelay:
+                EventSystem.Instance.Send(EventID.BROADCAST_FRAME_SYNC, _userInfo.uid);
                 HandleBroadcastFrameSync();
-                //ConsoleLogger.Warn(string.Format("Receive frame sync broadcast. response = {0}", result.Body));
                 break;
         }
     }
     #endregion
 
-    #region 数据分析
-    public Dictionary<string, int> Export()
-    {
-        return _analysisDic;
-    }
+    private string _httpUrl;
+    private MapInfo _mapInfo;
+    private UserInfo _userInfo;
 
-    private void Record(string type, int val = 1)
-    {
-        lock(_analysisDic)
-        {
-            if (!_analysisDic.ContainsKey(type))
-                _analysisDic.Add(type, 0);
+    private Socket _socket1;
+    private Socket _socket2;
 
-            _analysisDic[type] = _analysisDic[type] + val;
-        }
-    }
-    #endregion
+    private DateTime _startTime;
+
+    private bool _isCanSendFrame = false;
+    private int _lastFrameTime;
+    private const int FRAME_STEP = 60;
+
+    private int _tryTime = 0;
+    private const int MAX_TRY_TIME = 3;
+
+    private Dictionary<string, object> _sessions = new Dictionary<string, object>();
+
+    private string _ip { get { return _sessions["ipAddress"].ToString(); } }
+    private int _port { get { return int.Parse(_sessions["port"].ToString()); } }
+    private string _roomId { get { return _sessions["roomId"].ToString(); } }
+    private string _sessionId { get { return _sessions["sessionId"].ToString(); } }
 }
