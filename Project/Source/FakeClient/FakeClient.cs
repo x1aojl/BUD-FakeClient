@@ -93,17 +93,21 @@ public partial class FakeClient
         req.RoomId = _roomId;
         req.GameData = "{\"IsPvp\":\"0\",\"ReadyTime\":9,\"GameDuration\":0,\"WinType\":0,\"OpenBlood\":false,\"HasLeaderBoard\":false,\"InitBlood\":100.0,\"IsOpenBaggage\":false,\"Team\":\"\",\"damageType\":[0],\"Seq\":\"\"}";
 
-        _socket1.SendRequest(ClientSendServerReqCmd.ECmdEnterRoomReq, _userInfo.uid, req, (ok) => {
-            if (ok)
-                EventSystem.Instance.Send(EventID.ENTER_ROOM_REQ, _userInfo.uid);
-            else
-                Go();
-        });
+        if (_socket1 != null)
+        {
+            _socket1.SendRequest(ClientSendServerReqCmd.ECmdEnterRoomReq, _userInfo.uid, req, (ok) => {
+                if (ok)
+                    EventSystem.Instance.Send(EventID.ENTER_ROOM_REQ, _userInfo.uid);
+                else
+                    Go();
+            });
+        }
     }
 
     private void HandleEnterRoom()
     {
-        _socket2.Connect();
+        if (_socket2 != null)
+            _socket2.Connect();
 
         GetItems();
     }
@@ -127,12 +131,15 @@ public partial class FakeClient
         req.Msg = JsonConvert.SerializeObject(roomChatData);
         req.RecvPlayerList.AddRange(recvPlayerList);
 
-        _socket1.SendRequest(ClientSendServerReqCmd.ECmdRoomChatReq, _userInfo.uid, req, (ok) => {
-            if (ok)
-                EventSystem.Instance.Send(EventID.GET_ITEMS_REQ, _userInfo.uid);
-            else
-                Go();
-        });
+        if (_socket1 != null)
+        {
+            _socket1.SendRequest(ClientSendServerReqCmd.ECmdRoomChatReq, _userInfo.uid, req, (ok) => {
+                if (ok)
+                    EventSystem.Instance.Send(EventID.GET_ITEMS_REQ, _userInfo.uid);
+                else
+                    Go();
+            });
+        }
     }
 
     private void HandleGetItems(string data)
@@ -146,12 +153,15 @@ public partial class FakeClient
         req.RoomId = _roomId;
         req.PlayerId = _userInfo.uid;
 
-        _socket2.SendRequest(ClientSendServerReqCmd.ECmdStartFrameSyncReq, _userInfo.uid, req, (ok) => {
-            if (ok)
-                EventSystem.Instance.Send(EventID.START_FRAME_SYNC_REQ, _userInfo.uid);
-            else
-                Go();
-        });
+        if (_socket2 != null)
+        {
+            _socket2.SendRequest(ClientSendServerReqCmd.ECmdStartFrameSyncReq, _userInfo.uid, req, (ok) => {
+                if (ok)
+                    EventSystem.Instance.Send(EventID.START_FRAME_SYNC_REQ, _userInfo.uid);
+                else
+                    Go();
+            });
+        }
     }
 
     private void HandleStartFrameSync()
@@ -167,10 +177,13 @@ public partial class FakeClient
         req.RoomId = _roomId;
         req.PlayerId = _userInfo.uid;
 
-        _socket2.SendRequest(ClientSendServerReqCmd.ECmdStopFrameSyncReq, _userInfo.uid, req, (ok) => {
-            if (ok)
-                EventSystem.Instance.Send(EventID.STOP_FRAME_SYNC_REQ, _userInfo.uid);
-        });
+        if (_socket2 != null)
+        {
+            _socket2.SendRequest(ClientSendServerReqCmd.ECmdStopFrameSyncReq, _userInfo.uid, req, (ok) => {
+                if (ok)
+                    EventSystem.Instance.Send(EventID.STOP_FRAME_SYNC_REQ, _userInfo.uid);
+            });
+        }
     }
 
     private void HandleStopFrameSync()
@@ -184,12 +197,15 @@ public partial class FakeClient
         req.RoomId = _roomId;
         req.Item = GetFrameItem();
 
-        _socket2.SendRequest(ClientSendServerReqCmd.ECmdRelaySendFrameReq, _userInfo.uid, req, (ok) => {
-            if (ok)
-                EventSystem.Instance.Send(EventID.SEND_FRAME_SYNC_REQ, _userInfo.uid);
-            else
-                Go();
-        });
+        if (_socket2 != null)
+        {
+            _socket2.SendRequest(ClientSendServerReqCmd.ECmdRelaySendFrameReq, _userInfo.uid, req, (ok) => {
+                if (ok)
+                    EventSystem.Instance.Send(EventID.SEND_FRAME_SYNC_REQ, _userInfo.uid);
+                else
+                    Go();
+            });
+        }
     }
 
     private void HandleBroadcastFrameSync()
@@ -203,10 +219,13 @@ public partial class FakeClient
         req.PlayerId = _userInfo.uid;
         req.RoomId = _roomId;
 
-        _socket1.SendRequest(ClientSendServerReqCmd.ECmdQuitRoomReq, _userInfo.uid, req, (ok) => {
-            if (ok)
-                EventSystem.Instance.Send(EventID.LEAVE_ROOM_REQ, _userInfo.uid);
-        });
+        if (_socket1 != null)
+        {
+            _socket1.SendRequest(ClientSendServerReqCmd.ECmdQuitRoomReq, _userInfo.uid, req, (ok) => {
+                if (ok)
+                    EventSystem.Instance.Send(EventID.LEAVE_ROOM_REQ, _userInfo.uid);
+            });
+        }
     }
 
     private void HandleLeaveRoom()
@@ -356,8 +375,8 @@ public partial class FakeClient
 
     private Dictionary<string, object> _sessions = new Dictionary<string, object>();
 
-    private string _ip { get { return _sessions != null && _sessions["ipAddress"] != null ? _sessions["ipAddress"].ToString() : ""; } }
-    private int _port { get { return _sessions != null && _sessions["port"] != null ? int.Parse(_sessions["port"].ToString()) : 0; } }
-    private string _roomId { get { return _sessions != null && _sessions["roomId"] != null ? _sessions["roomId"].ToString() : ""; } }
-    private string _sessionId { get { return _sessions != null && _sessions["sessionId"] != null ? _sessions["sessionId"].ToString() : ""; } }
+    private string _ip { get { return _sessions != null && _sessions.ContainsKey("ipAddress") ? _sessions["ipAddress"].ToString() : ""; } }
+    private int _port { get { return _sessions != null && _sessions.ContainsKey("port") ? int.Parse(_sessions["port"].ToString()) : 0; } }
+    private string _roomId { get { return _sessions != null && _sessions.ContainsKey("roomId") ? _sessions["roomId"].ToString() : ""; } }
+    private string _sessionId { get { return _sessions != null && _sessions.ContainsKey("sessionId") ? _sessions["sessionId"].ToString() : ""; } }
 }
