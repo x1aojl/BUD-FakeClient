@@ -2,7 +2,6 @@
 // Created by xiaojl Aug/25/2022
 // 事件系统
 
-using System;
 using System.Collections.Generic;
 
 public class EventID
@@ -29,34 +28,36 @@ public class EventSystem
 {
     public static EventSystem Instance = new EventSystem();
 
-    public void Subscribe(string eventId, Action<string> callback)
+    public delegate void EventAction(params object[] args);
+
+    public void Subscribe(string eventId, EventAction callback)
     {
-        List<Action<string>> lst;
-        if (! _dic.TryGetValue(eventId, out lst))
+        List<EventAction> lst;
+        if (! _events.TryGetValue(eventId, out lst))
         {
-            lst = new List<Action<string>>();
-            _dic[eventId] = lst;
+            lst = new List<EventAction>();
+            _events[eventId] = lst;
         }
 
         lst.Add(callback);
     }
 
-    public void Unsubscribe(string eventId, Action<string> callback)
+    public void Unsubscribe(string eventId, EventAction callback)
     {
-        List<Action<string>> lst;
-        if (_dic.TryGetValue(eventId, out lst))
+        List<EventAction> lst;
+        if (_events.TryGetValue(eventId, out lst))
             lst.Remove(callback);
     }
 
-    public void Send(string eventId, string parameter)
+    public void Send(string eventId, params object[] args)
     {
-        List<Action<string>> lst;
-        if (_dic.TryGetValue(eventId, out lst))
+        List<EventAction> lst;
+        if (_events.TryGetValue(eventId, out lst))
         {
             for (int i = 0; i < lst.Count; i++)
-                lst[i]?.Invoke(parameter);
+                lst[i]?.Invoke(args);
         }
     }
 
-    private Dictionary<string, List<Action<string>>> _dic = new Dictionary<string, List<Action<string>>>();
+    private Dictionary<string, List<EventAction>> _events = new Dictionary<string, List<EventAction>>();
 }

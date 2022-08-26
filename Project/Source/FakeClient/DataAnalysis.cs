@@ -25,22 +25,22 @@ public class DataAnalysis : Component
             EventID.LEAVE_ROOM_REQ, EventID.LEAVE_ROOM_RSP,
         };
 
-        EventSystem.Instance.Subscribe(EventID.GET_GAME_SESSION_REQ, (userId) => { Record(userId, EventID.GET_GAME_SESSION_REQ); });
-        EventSystem.Instance.Subscribe(EventID.GET_GAME_SESSION_RSP, (userId) => { Record(userId, EventID.GET_GAME_SESSION_RSP); });
-        EventSystem.Instance.Subscribe(EventID.ENTER_ROOM_REQ,       (userId) => { Record(userId, EventID.ENTER_ROOM_REQ); });
-        EventSystem.Instance.Subscribe(EventID.ENTER_ROOM_RSP,       (userId) => { Record(userId, EventID.ENTER_ROOM_RSP); });
-        EventSystem.Instance.Subscribe(EventID.START_FRAME_SYNC_REQ, (userId) => { Record(userId, EventID.START_FRAME_SYNC_REQ); });
-        EventSystem.Instance.Subscribe(EventID.START_FRAME_SYNC_RSP, (userId) => { Record(userId, EventID.START_FRAME_SYNC_RSP); });
-        EventSystem.Instance.Subscribe(EventID.GET_ITEMS_REQ,        (userId) => { Record(userId, EventID.GET_ITEMS_REQ); });
-        EventSystem.Instance.Subscribe(EventID.GET_ITEMS_RSP,        (userId) => { Record(userId, EventID.GET_ITEMS_RSP); });
-        EventSystem.Instance.Subscribe(EventID.ENTER_ROOM_COST_TIME, (userId) => { Record(userId, EventID.ENTER_ROOM_COST_TIME); });
-        EventSystem.Instance.Subscribe(EventID.SEND_FRAME_SYNC_REQ,  (userId) => { Record(userId, EventID.SEND_FRAME_SYNC_REQ); });
-        EventSystem.Instance.Subscribe(EventID.SEND_FARME_SYNC_RSP,  (userId) => { Record(userId, EventID.SEND_FARME_SYNC_RSP); });
-        EventSystem.Instance.Subscribe(EventID.BROADCAST_FRAME_SYNC, (userId) => { Record(userId, EventID.BROADCAST_FRAME_SYNC); });
-        EventSystem.Instance.Subscribe(EventID.STOP_FRAME_SYNC_REQ,  (userId) => { Record(userId, EventID.STOP_FRAME_SYNC_REQ); });
-        EventSystem.Instance.Subscribe(EventID.STOP_FRAME_SYNC_RSP,  (userId) => { Record(userId, EventID.STOP_FRAME_SYNC_RSP); });
-        EventSystem.Instance.Subscribe(EventID.LEAVE_ROOM_REQ,       (userId) => { Record(userId, EventID.LEAVE_ROOM_REQ); });
-        EventSystem.Instance.Subscribe(EventID.LEAVE_ROOM_RSP,       (userId) => { Record(userId, EventID.LEAVE_ROOM_RSP); });
+        EventSystem.Instance.Subscribe(EventID.GET_GAME_SESSION_REQ, (args) => { var userId = args[0].ToString(); Record(userId, EventID.GET_GAME_SESSION_REQ); });
+        EventSystem.Instance.Subscribe(EventID.GET_GAME_SESSION_RSP, (args) => { var userId = args[0].ToString(); Record(userId, EventID.GET_GAME_SESSION_RSP); });
+        EventSystem.Instance.Subscribe(EventID.ENTER_ROOM_REQ,       (args) => { var userId = args[0].ToString(); Record(userId, EventID.ENTER_ROOM_REQ); });
+        EventSystem.Instance.Subscribe(EventID.ENTER_ROOM_RSP,       (args) => { var userId = args[0].ToString(); Record(userId, EventID.ENTER_ROOM_RSP); });
+        EventSystem.Instance.Subscribe(EventID.START_FRAME_SYNC_REQ, (args) => { var userId = args[0].ToString(); Record(userId, EventID.START_FRAME_SYNC_REQ); });
+        EventSystem.Instance.Subscribe(EventID.START_FRAME_SYNC_RSP, (args) => { var userId = args[0].ToString(); Record(userId, EventID.START_FRAME_SYNC_RSP); });
+        EventSystem.Instance.Subscribe(EventID.GET_ITEMS_REQ,        (args) => { var userId = args[0].ToString(); Record(userId, EventID.GET_ITEMS_REQ); });
+        EventSystem.Instance.Subscribe(EventID.GET_ITEMS_RSP,        (args) => { var userId = args[0].ToString(); Record(userId, EventID.GET_ITEMS_RSP); });
+        EventSystem.Instance.Subscribe(EventID.ENTER_ROOM_COST_TIME, (args) => { var userId = args[0].ToString(); Record(userId, EventID.ENTER_ROOM_COST_TIME); });
+        EventSystem.Instance.Subscribe(EventID.SEND_FRAME_SYNC_REQ,  (args) => { var userId = args[0].ToString(); Record(userId, EventID.SEND_FRAME_SYNC_REQ); });
+        EventSystem.Instance.Subscribe(EventID.SEND_FARME_SYNC_RSP,  (args) => { var userId = args[0].ToString(); Record(userId, EventID.SEND_FARME_SYNC_RSP); });
+        EventSystem.Instance.Subscribe(EventID.BROADCAST_FRAME_SYNC, (args) => { var userId = args[0].ToString(); Record(userId, EventID.BROADCAST_FRAME_SYNC); });
+        EventSystem.Instance.Subscribe(EventID.STOP_FRAME_SYNC_REQ,  (args) => { var userId = args[0].ToString(); Record(userId, EventID.STOP_FRAME_SYNC_REQ); });
+        EventSystem.Instance.Subscribe(EventID.STOP_FRAME_SYNC_RSP,  (args) => { var userId = args[0].ToString(); Record(userId, EventID.STOP_FRAME_SYNC_RSP); });
+        EventSystem.Instance.Subscribe(EventID.LEAVE_ROOM_REQ,       (args) => { var userId = args[0].ToString(); Record(userId, EventID.LEAVE_ROOM_REQ); });
+        EventSystem.Instance.Subscribe(EventID.LEAVE_ROOM_RSP,       (args) => { var userId = args[0].ToString(); Record(userId, EventID.LEAVE_ROOM_RSP); });
     }
 
     public void Export()
