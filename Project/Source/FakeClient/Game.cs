@@ -47,12 +47,17 @@ public class Game : Core
     public void Start()
     {
         FrameDriver.Instance.RunOneFrame += RunOneFrame;
+        FrameDriver.Instance.RunOneFrame += TimerManager.Instance.RunOneFrame;
 
         Get<ConsoleInput>().Start();
 
         var clients = GetAllClients();
         foreach (FakeClient client in clients)
         {
+            TimerManager.Instance.RunOnce("Timer", 15 * 1000f, (args) => {
+                client.Quit();
+            });
+
             _workingThread.Dispatch(() => {
                 client.Go();
             });

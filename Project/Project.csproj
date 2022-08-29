@@ -74,6 +74,7 @@
     <Compile Include="Source\FakeClient\DataAnalysis.cs" />
     <Compile Include="Source\FakeClient\EventSystem.cs" />
     <Compile Include="Source\FakeClient\Game.cs" />
+    <Compile Include="Source\Manager\TimerManager.cs" />
     <Compile Include="Source\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Source\Configs\GlobalInfo.cs" />
